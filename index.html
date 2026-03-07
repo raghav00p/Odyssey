@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Notes Assistant</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        textarea { width: 100%; height: 200px; }
+        button { margin: 10px 5px; padding: 10px; }
+        #output { margin-top: 20px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>AI Notes Summarizer, Expander & Quiz Creator</h1>
+    <textarea id="notes" placeholder="Enter your notes here..."></textarea>
+    <br>
+    <button onclick="process('summarize')">Summarize</button>
+    <button onclick="process('expand')">Expand</button>
+    <button onclick="process('quiz')">Create Quiz</button>
+    <div id="output"></div>
+
+    <script>
+        async function process(action) {
+            const notes = document.getElementById('notes').value;
+            if (!notes.trim()) {
+                alert('Please enter some notes.');
+                return;
+            }
+
+            let prompt;
+            if (action === 'summarize') {
+                prompt = `Summarize the following notes concisely:\n\n${notes}`;
+            } else if (action === 'expand') {
+                prompt = `Expand on the following notes with more details and explanations:\n\n${notes}`;
+            } else if (action === 'quiz') {
+                prompt = `Create a quiz with 5 multiple-choice questions based on the following notes. Format as: Question? A) option B) option C) option D) option Answer: correct\n\n${notes}`;
+            }
+
+            document.getElementById('output').textContent = 'Processing...';
+
+            try {
+                const response = await fetch('http://localhost:11434/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'llama3.2:1b',
+                        prompt: prompt,
+                        stream: false
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to get response from Ollama');
+                }
+
+                const data = await response.json();
+                document.getElementById('output').textContent = data.response;
+            } catch (error) {
+                document.getElementById('output').textContent = 'Error: ' + error.message + '\n\nMake sure Ollama is running with the model loaded.';
+            }
+        }
+    </script>
+</body>
+</html>
